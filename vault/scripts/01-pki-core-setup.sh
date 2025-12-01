@@ -61,13 +61,13 @@ vault write -format=json pki/root/generate/internal \
 
 # 6. Configure URLs
 vault write pki/config/urls \
-    issuing_certificates="https://docker.home.arpa:8200/v1/pki/ca" \
-    crl_distribution_points="https://docker.home.arpa:8200/v1/pki/crl"
+    issuing_certificates="https://hashicorpvault.home.arpa:8200/v1/pki/ca" \
+    crl_distribution_points="https://hashicorpvault.home.arpa:8200/v1/pki/crl"
 
 # 7. Create Infra Role
 vault write pki/roles/infra-core \
-    allowed_domains="vault.home.arpa,freeipa.home.arpa,puppet.home.arpa,docker.home.arpa,vault" \
-    allow_subdomains=false \
+    allowed_domains="home.arpa" \
+    allow_subdomains=true \
     allow_bare_domains=true \
     allow_localhost=true \
     allow_ip_sans=true \
@@ -78,9 +78,9 @@ vault write pki/roles/infra-core \
 # This generates the certs that Vault itself will use for TLS
 echo "Issuing Vault Server Certificate..."
 vault write -format=json pki/issue/infra-core \
-    alt_names="vault,docker.home.arpa" \
+    alt_names="vault,docker.home.arpa,hashicorpvault.home.arpa" \
     ip_sans="127.0.0.1" \
-    ttl=87599h > /tmp/vault_cert_bundle.json
+    ttl=87000h > /tmp/vault_cert_bundle.json
 
 # 9. Export keys to config volume
 jq -r ".data.certificate" /tmp/vault_cert_bundle.json > /certificates/vault.crt

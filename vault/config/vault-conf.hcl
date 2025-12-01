@@ -1,4 +1,4 @@
-api_addr = "https://docker.home.arpa:8200"
+api_addr = "https://hashicorpvault.home.arpa:8200"
 ui = "false"
 
 storage "file" {

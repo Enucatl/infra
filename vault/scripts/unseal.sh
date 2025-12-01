@@ -6,6 +6,8 @@
 
 echo "[Unsealer] Waiting for Vault..."
 
+curl -s "$VAULT_ADDR/v1/sys/health"
+
 # Loop until Vault returns a response (even if 503/Sealed)
 until curl -s -o /dev/null "$VAULT_ADDR/v1/sys/health"; do
     echo "[Unsealer] Vault not ready. Retrying in 2s..."

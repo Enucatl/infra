@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Configuration
+CONTAINER_NAME="freeipa"
+GROUP_NAME="admins"
+TARGET_USER="user"
+RULE_NAME="admins_sudo_rule"
+
+echo "Running configuration inside docker container: $CONTAINER_NAME..."
+
+# We use a heredoc (<<EOF) to run multiple commands inside the single docker exec session
+docker exec -i $CONTAINER_NAME bash <<EOF
+
+# 1. Authenticate using the internal environment variable
+echo "Authentication..."
+echo "\$PASSWORD" | kinit admin > /dev/null
+
+if [ \$? -ne 0 ]; then
+    echo "❌ Authentication failed. Is \$PASSWORD set inside the container?"
+    exit 1
+fi
+
+# 3. Add user 'user' to the group
+echo "Adding user '$TARGET_USER' to '$GROUP_NAME'..."
+ipa group-add-member $GROUP_NAME --users=$TARGET_USER || echo "   (User likely already in group)"
+
+# 4. Create the Sudo Rule
+echo "Creating Sudo Rule: $RULE_NAME..."
+ipa sudorule-add $RULE_NAME || echo "   (Rule likely already exists)"
+
+# 5. Configure the Rule Details
+echo "Configuring Rule details..."
+
+# Apply to the group
+ipa sudorule-add-user $RULE_NAME --groups=$GROUP_NAME
+
+# Allow on ALL hosts
+ipa sudorule-mod $RULE_NAME --hostcat=all
+
+# Allow ALL commands
+ipa sudorule-mod $RULE_NAME --cmdcat=all
+
+# Allow to RunAs ALL users (root, etc)
+ipa sudorule-mod $RULE_NAME --runasusercat=all
+
+# Note: We do NOT add '!authenticate'. 
+# By default, FreeIPA sudo rules REQUIRE a password. 
+# You only add an option if you want to turn that off.
+
+echo "✅ Configuration Complete."
+EOF

@@ -36,8 +36,8 @@ vault secrets tune -max-lease-ttl=43800h pki_int
 
 # 8. Configure URLs for Intermediate
 vault write pki_int/config/urls \
-    issuing_certificates="https://docker.home.arpa:8200/v1/pki_int/ca" \
-    crl_distribution_points="https://docker.home.arpa:8200/v1/pki_int/crl"
+    issuing_certificates="https://hashicorpvault.home.arpa:8200/v1/pki_int/ca" \
+    crl_distribution_points="https://hashicorpvault.home.arpa:8200/v1/pki_int/crl"
 
 # 5. Generate CSR for Intermediate
 echo "Generating Intermediate CSR..."

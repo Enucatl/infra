@@ -23,9 +23,9 @@ services:
       - vault
     environment:
       - CURL_CA_BUNDLE=${VAULT_CACERT}
+      - KEYS_FILE
       - VAULT_ADDR
       - VAULT_CACERT
-      - KEYS_FILE
     volumes:
       - ./vault/scripts:/scripts
       - certificates:/certificates
@@ -33,47 +33,11 @@ services:
     networks:
       - infra
 
-  vault-pki-core-setup:
-    image: hashicorp/vault:latest
-    userns_mode: host
-    restart: no
-    depends_on:
-      vault-unsealer:
-        condition: service_completed_successfully
-    environment:
-      - VAULT_ADDR
-      - VAULT_CACERT
-      - KEYS_FILE
-    volumes:
-      - ./vault/scripts:/scripts
-      - certificates:/certificates
-    networks:
-      - infra
-    entrypoint: /scripts/01-pki-core-setup.sh
-
-  vault-pki-intermediate-setup:
-    image: hashicorp/vault:latest
-    userns_mode: host
-    restart: "no"
-    depends_on:
-      vault-unsealer:
-        condition: service_completed_successfully
-    environment:
-      - KEYS_FILE
-      - VAULT_ADDR
-      - VAULT_CACERT
-    volumes:
-      - ./vault/scripts:/scripts
-      - certificates:/certificates
-    entrypoint: /scripts/02-pki-intermediate.sh
-    networks:
-      - infra
-
   freeipa:
     image: freeipa/freeipa-server:almalinux-10
     container_name: freeipa
     hostname: freeipa.home.arpa
-    # restart: unless-stopped
+    restart: unless-stopped
     networks:
       - infra
     ports:
@@ -95,25 +59,62 @@ services:
       - net.ipv6.conf.all.disable_ipv6=0
       - net.ipv6.conf.all.forwarding=1
 
-  freeipa-sign-csr:
-    image: hashicorp/vault:latest
-    userns_mode: host
-    restart: "no"
-    depends_on:
-      vault-unsealer:
-        condition: service_completed_successfully
-    environment:
-      - KEYS_FILE
-      - VAULT_ADDR
-      - VAULT_CACERT
-    volumes:
-      - ./vault/scripts:/scripts
-      - freeipa_data:/data
-      - certificates:/certificates
-    entrypoint: /scripts/04-sign-csr.sh
-    networks:
-      - infra
-
+  # TEMPORARY CONTAINERS
+  # only to document one-off setup
+#  vault-pki-core-setup:
+#    image: hashicorp/vault:latest
+#    userns_mode: host
+#    restart: no
+#    depends_on:
+#      vault-unsealer:
+#        condition: service_completed_successfully
+#    environment:
+#      - VAULT_ADDR
+#      - VAULT_CACERT
+#      - KEYS_FILE
+#    volumes:
+#      - ./vault/scripts:/scripts
+#      - certificates:/certificates
+#    networks:
+#      - infra
+#    entrypoint: /scripts/01-pki-core-setup.sh
+#
+#  vault-pki-intermediate-setup:
+#    image: hashicorp/vault:latest
+#    userns_mode: host
+#    restart: "no"
+#    depends_on:
+#      vault-unsealer:
+#        condition: service_completed_successfully
+#    environment:
+#      - KEYS_FILE
+#      - VAULT_ADDR
+#      - VAULT_CACERT
+#    volumes:
+#      - ./vault/scripts:/scripts
+#      - certificates:/certificates
+#    entrypoint: /scripts/02-pki-intermediate.sh
+#    networks:
+#      - infra
+#        
+#  freeipa-sign-csr:
+#    image: hashicorp/vault:latest
+#    userns_mode: host
+#    restart: "no"
+#    depends_on:
+#      vault-unsealer:
+#        condition: service_completed_successfully
+#    environment:
+#      - KEYS_FILE
+#      - VAULT_ADDR
+#      - VAULT_CACERT
+#    volumes:
+#      - ./vault/scripts:/scripts
+#      - freeipa_data:/data
+#      - certificates:/certificates
+#    entrypoint: /scripts/04-sign-csr.sh
+#    networks:
+#      - infra
 
 networks:
   infra:
