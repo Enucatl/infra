@@ -1,6 +1,13 @@
 #!/bin/bash
 
-#set -ex
+set -x
+
+if [ -f .env ]; then
+  set -o allexport
+  source .env
+  set +o allexport
+fi
+export VAULT_CACERT=/usr/local/share/ca-certificates/home-arpa/vault_root.crt
 
 vault audit enable file file_path=/vault/file/audit.log elide_list_responses=true
 vault auth enable cert

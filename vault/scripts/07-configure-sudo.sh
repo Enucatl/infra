@@ -20,6 +20,20 @@ if [ \$? -ne 0 ]; then
     exit 1
 fi
 
+ipa config-mod --defaultshell=/bin/bash 
+ipa pwpolicy-mod --maxlife=20000
+
+TEMP_PASSWORD=$(openssl rand -base64 16)
+
+ipa user-add ${TARGET_USER} \
+    --first="${TARGET_USER}" \
+    --last="${TARGET_USER}" \
+    --sshpubkey="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEot3u2cV0DaYXoTiFLyCQkEGixSVZhdzddnhbRtaPu/ 1423701+Enucatl@users.noreply.github.com"
+
+echo "${TEMP_PASSWORD}" | ipa passwd ${NEW_USERNAME} 
+echo "Temporary password set."
+echo "${TEMP_PASSWORD}"
+
 # 3. Add user 'user' to the group
 echo "Adding user '$TARGET_USER' to '$GROUP_NAME'..."
 ipa group-add-member $GROUP_NAME --users=$TARGET_USER || echo "   (User likely already in group)"

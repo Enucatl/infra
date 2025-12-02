@@ -1,6 +1,12 @@
 set -ex
 
-export VAULT_ADDR="https://docker.home.arpa:8200"
+if [ -f .env ]; then
+  set -o allexport
+  source .env
+  set +o allexport
+fi
+export VAULT_CACERT=/usr/local/share/ca-certificates/home-arpa/vault_root.crt
+
 curl -s --insecure $VAULT_ADDR/v1/pki_int/ca_chain > ~/Downloads/vault_chain.pem
 sudo mkdir -p /usr/local/share/ca-certificates/home-arpa
 curl --insecure -s $VAULT_ADDR/v1/pki_int/ca/pem \

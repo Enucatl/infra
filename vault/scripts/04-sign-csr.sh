@@ -8,6 +8,11 @@ CSR_FILE="/data/ipa.csr"
 CRT_FILE="/data/ipa.crt"
 CA_FILE="/data/ca.crt"
 
+if [ -f $CA_FILE ]; then
+  echo "FreeIPA CA already initialized, exiting."
+  exit 0
+fi
+
 # 3. Wait for the CSR to appear
 echo "Waiting for FreeIPA to generate CSR at $CSR_FILE..."
 while [ ! -f "$CSR_FILE" ]; do

@@ -36,8 +36,8 @@ vault secrets tune -max-lease-ttl=43800h pki_int
 
 # 8. Configure URLs for Intermediate
 vault write pki_int/config/urls \
-    issuing_certificates="https://hashicorpvault.home.arpa:8200/v1/pki_int/ca" \
-    crl_distribution_points="https://hashicorpvault.home.arpa:8200/v1/pki_int/crl"
+    issuing_certificates="https://hcv.home.arpa:8200/v1/pki_int/ca" \
+    crl_distribution_points="https://hcv.home.arpa:8200/v1/pki_int/crl"
 
 # 5. Generate CSR for Intermediate
 echo "Generating Intermediate CSR..."
@@ -65,7 +65,7 @@ echo "Intermediate CA successfully created and signed."
 vault write pki_int/roles/general \
     allowed_domains="home.arpa" \
     allow_subdomains=true \
-    allow_bare_domain=true \
+    allow_bare_domains=true \
     allow_wildcard_certificates=true \
     require_cn=false \
     max_ttl="8760h"

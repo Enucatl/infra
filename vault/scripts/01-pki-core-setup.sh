@@ -1,5 +1,13 @@
 #!/bin/sh
 
+set -e
+
+# Check if VAULT_ADDR starts with "https"
+if [[ "$VAULT_ADDR" == https* ]]; then
+    echo "vault is already configured with HTTPS, nothing to do"
+    exit 0
+fi
+
 # Install jq for JSON processing (Vault image is Alpine based)
 # We suppress output to keep logs clean
 apk add --no-cache jq > /dev/null 2>&1
@@ -7,7 +15,11 @@ apk add --no-cache jq > /dev/null 2>&1
 KEYS_FILE="/certificates/keys.json"
 VAULT_RETRIES=10
 
+echo $(vault status)
+
 echo "--- Starting PKI Setup ---"
+
+
 
 # 1. Wait for Vault to be active and unsealed
 # We loop checking 'vault status'. 
@@ -61,8 +73,8 @@ vault write -format=json pki/root/generate/internal \
 
 # 6. Configure URLs
 vault write pki/config/urls \
-    issuing_certificates="https://hashicorpvault.home.arpa:8200/v1/pki/ca" \
-    crl_distribution_points="https://hashicorpvault.home.arpa:8200/v1/pki/crl"
+    issuing_certificates="https://hcv.home.arpa:8200/v1/pki/ca" \
+    crl_distribution_points="https://hcv.home.arpa:8200/v1/pki/crl"
 
 # 7. Create Infra Role
 vault write pki/roles/infra-core \
@@ -78,9 +90,9 @@ vault write pki/roles/infra-core \
 # This generates the certs that Vault itself will use for TLS
 echo "Issuing Vault Server Certificate..."
 vault write -format=json pki/issue/infra-core \
-    alt_names="vault,docker.home.arpa,hashicorpvault.home.arpa" \
+    alt_names="docker.home.arpa,hcv.home.arpa,vault.home.arpa" \
     ip_sans="127.0.0.1" \
-    ttl=87000h > /tmp/vault_cert_bundle.json
+    ttl=57000h > /tmp/vault_cert_bundle.json
 
 # 9. Export keys to config volume
 jq -r ".data.certificate" /tmp/vault_cert_bundle.json > /certificates/vault.crt
