@@ -21,7 +21,7 @@ services:
 
   vault-unsealer:
     image: nicolaka/netshoot:v0.14
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       - vault
     environment:
@@ -67,6 +67,8 @@ services:
 
   # after running this, setup TLS for vault, changing the env and the config file
   vault-pki-core-setup:
+    profiles:
+      - setup
     image: hashicorp/vault:latest
     userns_mode: host
     restart: no
@@ -84,6 +86,8 @@ services:
     entrypoint: /scripts/01-pki-core-setup.sh
 
   vault-pki-intermediate-setup:
+    profiles:
+      - setup
     image: hashicorp/vault:latest
     userns_mode: host
     restart: "no"
@@ -102,6 +106,8 @@ services:
       - infra
 
   freeipa-sign-csr:
+    profiles:
+      - setup
     image: hashicorp/vault:latest
     userns_mode: host
     restart: "no"

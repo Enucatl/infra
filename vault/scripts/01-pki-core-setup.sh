@@ -90,6 +90,7 @@ vault write pki/roles/infra-core \
 # This generates the certs that Vault itself will use for TLS
 echo "Issuing Vault Server Certificate..."
 vault write -format=json pki/issue/infra-core \
+    common_name="hcv.home.arpa" \
     alt_names="docker.home.arpa,hcv.home.arpa,vault.home.arpa" \
     ip_sans="127.0.0.1" \
     ttl=57000h > /tmp/vault_cert_bundle.json
