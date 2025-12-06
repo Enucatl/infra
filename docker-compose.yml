@@ -43,12 +43,13 @@ services:
     restart: unless-stopped
     networks:
       - infra
+      - traefik_proxy
     ports:
-      - "80:80"
       - "88:88"
+      - "88:88/udp"
       - "389:389"
-      - "443:443"
       - "464:464"
+      - "464:464/udp"
       - "636:636"
     environment:
       # first run this to generate the CSR
@@ -61,6 +62,21 @@ services:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
       - net.ipv6.conf.all.forwarding=1
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.freeipa-secure.entrypoints=https"
+      # Route based on the domain name (SNI)
+      - "traefik.tcp.routers.freeipa-secure.rule=HostSNI(`freeipa.${DOMAIN}`)"
+      # Crucial: Passthrough tells Traefik NOT to decrypt
+      - "traefik.tcp.routers.freeipa-secure.tls.passthrough=true"
+      # Point to the FreeIPA container's internal HTTPS port
+      - "traefik.tcp.services.freeipa-secure.loadbalancer.server.port=443"
+      # --- HTTP (Redirection only) ---
+      # FreeIPA will handle the redirect to HTTPS internally
+      - "traefik.http.routers.freeipa-web.entrypoints=http"
+      - "traefik.http.routers.freeipa-web.rule=Host(`freeipa.${DOMAIN}`)"
+      - "traefik.http.services.freeipa-web.loadbalancer.server.port=80"
 
   # TEMPORARY CONTAINERS
   # only to document one-off setup
@@ -130,6 +146,12 @@ networks:
   infra:
     name: infra
     enable_ipv6: true
+    ipam:
+      driver: default
+  traefik_proxy:
+    name: traefik_proxy
+    enable_ipv6: true
+    attachable: true
     ipam:
       driver: default
 
