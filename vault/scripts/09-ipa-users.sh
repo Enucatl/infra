@@ -22,6 +22,7 @@ fi
 
 ipa user-add ldap_ro --first ldap --last ro --shell /usr/sbin/nologin
 ipa user-add printer --first printer --last printer --shell /usr/sbin/nologin
+ipa user-add airflow --first airflow --last airflow --shell /usr/sbin/nologin
 
 echo "✅ Configuration Complete."
 EOF
