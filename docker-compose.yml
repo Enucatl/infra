@@ -18,6 +18,8 @@ services:
       - infra
     command: vault server -config /vault/config/vault-conf.hcl
     #command: vault server -config /vault/config/vault-conf-insecure.hcl
+    labels:
+      - "checkmk_monitor=true"
 
   vault-unsealer:
     image: nicolaka/netshoot:v0.14
@@ -64,6 +66,7 @@ services:
       - net.ipv6.conf.all.forwarding=1
 
     labels:
+      - "checkmk_monitor=true"
       - "traefik.enable=true"
       - "traefik.tcp.routers.freeipa-secure.entrypoints=https"
       # Route based on the domain name (SNI)
