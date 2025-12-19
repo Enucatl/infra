@@ -19,4 +19,8 @@ path "kv/data/puppet" {
 path "pki_int/issue/general" {
     capabilities = ["create", "update"]
 }
+
+path "auth/token/lookup-self" {
+  capabilities = ["read"]
+}
 EOF
