@@ -68,16 +68,12 @@ services:
     labels:
       - "checkmk_monitor=true"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik_proxy"
       - "traefik.tcp.routers.freeipa-secure.entrypoints=https"
-      - "traefik.tcp.routers.freeipa-secure.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.freeipa-secure.rule=HostSNI(`freeipa.home.arpa`)"
       - "traefik.tcp.routers.freeipa-secure.tls=true"
       - "traefik.tcp.routers.freeipa-secure.tls.passthrough=true"
       - "traefik.tcp.services.freeipa-secure.loadbalancer.server.port=443"
-      # --- HTTP (Redirection only) ---
-      # FreeIPA will handle the redirect to HTTPS internally
-      - "traefik.http.routers.freeipa-web.entrypoints=http"
-      - "traefik.http.routers.freeipa-web.rule=Host(`freeipa.${DOMAIN}`)"
-      - "traefik.http.services.freeipa-web.loadbalancer.server.port=80"
 
   apt-cacher-ng:
     image: sameersbn/apt-cacher-ng:latest
