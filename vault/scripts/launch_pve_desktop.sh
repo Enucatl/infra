@@ -12,8 +12,6 @@ RET_VAL=$?
 
 # Check if the password variable is empty or if vault failed
 if [ $RET_VAL -ne 0 ] || [ -z "$SERVER_PASS" ]; then
-    echo $?
-    echo $SERVER_PASS
     echo "[!] Error: Could not retrieve password from Vault. Exiting."
     exit 1
 fi
@@ -40,7 +38,7 @@ done
 echo "[+] Dropbear is up. Attempting to unlock via expect..."
 # We use 'expect' to handle the TTY interaction.
 # We access the password via $env(SERVER_PASS) to avoid Bash syntax conflicts.
-expect <<EOF
+SERVER_PASS="$SERVER_PASS" expect <<EOF
   log_user 1
   set timeout 10
   
@@ -49,7 +47,7 @@ expect <<EOF
 
   # Handle the prompt. 
   expect {
-    -re "ZFS password for rpool/ROOT" {
+    "password for rpool/ROOT" {
       send "\$env(SERVER_PASS)\r"
     }
     timeout {
