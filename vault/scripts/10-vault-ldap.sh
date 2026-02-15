@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -x
+set -euo pipefail
+
+. "$(dirname "$0")/config.sh"
 
 if [ -f .env ]; then
   set -o allexport
@@ -9,9 +11,10 @@ if [ -f .env ]; then
 fi
 export VAULT_CACERT=/etc/ssl/certs/ca-certificates.crt
 
-vault auth enable ldap
+vault auth list 2>/dev/null | grep -q '^ldap/' || vault auth enable ldap
 
-export LDAP_BIND_PASSWORD=$(vault kv get -field=ldap_ro::password kv/puppet)
+LDAP_BIND_PASSWORD=$(vault kv get -field=ldap_ro::password kv/puppet)
+export LDAP_BIND_PASSWORD
 
 # Check if the password was retrieved successfully (optional)
 if [ -z "$LDAP_BIND_PASSWORD" ]; then
@@ -22,20 +25,18 @@ fi
 echo "LDAP bind password retrieved successfully."
 
 vault write auth/ldap/config \
-    url="ldaps://freeipa.home.arpa" \
-    binddn="uid=ldap_ro,cn=users,cn=accounts,dc=home,dc=arpa" \
+    url="ldaps://${FREEIPA_FQDN}" \
+    binddn="uid=ldap_ro,${LDAP_USER_DN}" \
     bindpass="${LDAP_BIND_PASSWORD}" \
-    userdn="cn=users,cn=accounts,dc=home,dc=arpa" \
+    userdn="${LDAP_USER_DN}" \
     userattr="uid" \
     userfilter="(&({{.UserAttr}}={{.Username}})(objectClass=person))" \
     groupattr="cn" \
-    groupdn="cn=groups,cn=accounts,dc=home,dc=arpa" \
+    groupdn="${LDAP_GROUP_DN}" \
     groupfilter="(|(member={{.UserDN}})(mepManagedBy={{.UserDN}}))" \
-    tls_server_name="freeipa.home.arpa" \
+    tls_server_name="${FREEIPA_FQDN}" \
     starttls="false" \
     request_timeout="10s" \
     certificate=@/etc/ssl/certs/ca-certificates.crt
 
 unset LDAP_BIND_PASSWORD
-
-vault write auth/ldap/groups/admins policies=admin,default

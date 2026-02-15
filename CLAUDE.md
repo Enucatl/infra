@@ -54,7 +54,9 @@ Scripts are sequential and build on each other:
 11. `11-vault-airflow.sh` — Airflow KV read policy
 12. `12-ipa-nfs.sh` — NFS configuration for FreeIPA
 
-Other scripts: `unseal.sh` (auto-unseal loop), `backup.sh` (Vault backup with fs freeze), `launch_pve_desktop.sh`/`.py` (Proxmox VM automation).
+13. `13-vault-admin-policy.sh` — Admin Vault policy + LDAP group mapping
+
+Other scripts: `unseal.sh` (auto-unseal loop), `backup.sh` (Vault backup with fs freeze), `launch_pve_desktop.py` (Proxmox VM automation), `config.sh` (shared constants sourced by all scripts).
 
 ### Networking
 
@@ -76,7 +78,25 @@ First-time setup: start Vault + unsealer → run `vault-pki-core-setup` (insecur
 
 ## Conventions
 
-- Setup scripts are shell (`#!/bin/sh` or `#!/bin/bash`) and use `set -e`. They run inside Alpine-based Vault containers that install `jq` at runtime.
+- Scripts running in Alpine-based Vault containers (01, 02, 04) use `#!/bin/sh` with `set -eu`. Host-side scripts use `#!/usr/bin/env bash` with `set -euo pipefail`.
+- All scripts source `config.sh` for shared constants (domain, LDAP DNs, TTLs). Container scripts: `. /scripts/config.sh`. Host scripts: `. "$(dirname "$0")/config.sh"`.
 - Scripts use the Vault HTTP API via `curl` (not the `vault` CLI) when running in the unsealer/netshoot container.
 - FreeIPA configuration scripts use `ipa` CLI commands with `echo $PASSWORD | kinit admin` for Kerberos auth.
 - Traefik labels use TCP routers with TLS passthrough (not HTTP termination) for FreeIPA.
+- Setup scripts include idempotency guards (check before create) so they can be safely re-run.
+
+## TTL Strategy
+
+Certificate and token TTLs are defined in `vault/scripts/config.sh` and used across setup scripts:
+
+| Certificate | TTL | Variable | Script |
+|---|---|---|---|
+| Root CA | 87600h (10 years) | `ROOT_CA_TTL` | 01-pki-core-setup.sh |
+| Intermediate CA | 43800h (5 years) | `INTERMEDIATE_CA_TTL` | 02-pki-intermediate.sh |
+| FreeIPA intermediate cert | 43800h (5 years) | `INTERMEDIATE_CA_TTL` | 04-sign-csr.sh |
+| Puppet CA | 43800h (5 years) | `INTERMEDIATE_CA_TTL` | 03-puppet-external-ca.sh |
+| General cert role max | 8760h (1 year) | `CERT_MAX_TTL` | 02-pki-intermediate.sh |
+| Vault server cert | 57000h (~6.5 years) | `VAULT_CERT_TTL` | 01-pki-core-setup.sh |
+| Puppet token | 15m | (hardcoded) | 06-vault-puppet.sh |
+
+**Rotation:** Manual re-run of the relevant setup script. Scripts are idempotent — existing PKI engines are detected and skipped, but cert re-issuance requires manual intervention (disable + re-enable the engine, or issue a new cert via the existing role).

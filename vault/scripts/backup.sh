@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -euo pipefail
 
 # Configuration
 SOURCE_DIR="/var/lib/docker/100000.100000/volumes/infra_vault_data/_data"

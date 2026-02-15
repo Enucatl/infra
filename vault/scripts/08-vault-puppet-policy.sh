@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -x
+set -euo pipefail
 
 if [ -f .env ]; then
   set -o allexport

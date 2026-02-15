@@ -1,26 +1,28 @@
 #!/bin/sh
 
+set -eu
+
+. /scripts/config.sh
+
 # Install jq
 apk add --no-cache jq > /dev/null 2>&1
-
-VAULT_RETRIES=5
 
 echo "--- Starting Intermediate CA Setup ---"
 
 # 1. Wait for Vault
 counter=0
-while [ $counter -lt $VAULT_RETRIES ]; do
+while [ $counter -lt "$VAULT_RETRIES" ]; do
     if vault status > /dev/null 2>&1; then
         break
     fi
     echo "Waiting for Vault..."
-    sleep 2
+    sleep "$VAULT_RETRY_INTERVAL"
     counter=$((counter+1))
 done
 
 # 2. Login
 ROOT_TOKEN=$(jq -r ".root_token" "$KEYS_FILE")
-export VAULT_TOKEN=$ROOT_TOKEN
+export VAULT_TOKEN="$ROOT_TOKEN"
 
 # 3. Idempotency Check
 if vault secrets list -format=json | jq -e '."pki_int/"' > /dev/null; then
@@ -32,18 +34,18 @@ echo "Setting up Intermediate CA..."
 
 # 4. Enable and Tune (5 Years)
 vault secrets enable -path=pki_int pki
-vault secrets tune -max-lease-ttl=43800h pki_int
+vault secrets tune -max-lease-ttl="$INTERMEDIATE_CA_TTL" pki_int
 
 # 8. Configure URLs for Intermediate
 vault write pki_int/config/urls \
-    issuing_certificates="https://hcv.home.arpa:8200/v1/pki_int/ca" \
-    crl_distribution_points="https://hcv.home.arpa:8200/v1/pki_int/crl"
+    issuing_certificates="https://${VAULT_FQDN}:8200/v1/pki_int/ca" \
+    crl_distribution_points="https://${VAULT_FQDN}:8200/v1/pki_int/crl"
 
 # 5. Generate CSR for Intermediate
 echo "Generating Intermediate CSR..."
 vault write -format=json pki_int/intermediate/generate/internal \
     common_name="Docker Home Arpa Intermediate CA" \
-    ttl=43800h \
+    ttl="$INTERMEDIATE_CA_TTL" \
     | jq -r ".data.csr" > /tmp/pki_int.csr
 
 # 6. Sign CSR with Root CA
@@ -52,7 +54,7 @@ echo "Signing Intermediate CSR with Root CA..."
 vault write -format=json pki/root/sign-intermediate \
     csr=@/tmp/pki_int.csr \
     format=pem_bundle \
-    ttl=43800h \
+    ttl="$INTERMEDIATE_CA_TTL" \
     | jq -r ".data.certificate" > /tmp/intermediate.crt
 
 # 7. Import Signed Cert back to Intermediate
@@ -63,11 +65,11 @@ echo "Intermediate CA successfully created and signed."
 
 # 9. Create General Role
 vault write pki_int/roles/general \
-    allowed_domains="home.arpa" \
+    allowed_domains="$DOMAIN" \
     allow_subdomains=true \
     allow_bare_domains=true \
     allow_wildcard_certificates=true \
     require_cn=false \
-    max_ttl="8760h"
+    max_ttl="$CERT_MAX_TTL"
 
 echo "--- Intermediate Setup Complete ---"
