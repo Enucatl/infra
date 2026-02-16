@@ -44,8 +44,9 @@ def wait_for_port(host, port, timeout_secs, sleep_interval=2):
     default="pve-desktop.home.arpa",
     help="Hostname/IP of the Proxmox Hypervisor",
 )
+@click.option("--broadcast", default="10.0.0.255", help="Subnet broadcast address for WoL")
 @click.option("--vm-id", default=300, help="ID of the Proxmox VM to start")
-def main(mac, dropbear_host, main_host, proxmox_host, vm_id):
+def main(mac, dropbear_host, main_host, proxmox_host, broadcast, vm_id):
     """
     Automates the process of waking a Proxmox server, unlocking the ZFS root via Dropbear,
     starting a specific VM, and launching Sunshine.
@@ -74,7 +75,7 @@ def main(mac, dropbear_host, main_host, proxmox_host, vm_id):
     # 2. Send Wake-on-LAN
     click.echo(f"[-] Sending Wake-on-LAN packet to {mac}...")
     try:
-        subprocess.check_call(f"wakeonlan '{mac}'", shell=True)
+        subprocess.check_call(f"wakeonlan -i '{broadcast}' '{mac}'", shell=True)
     except subprocess.CalledProcessError:
         click.echo("[!] Failed to send WoL.", err=True)
         sys.exit(1)
