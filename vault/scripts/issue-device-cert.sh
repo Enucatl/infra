@@ -7,9 +7,9 @@ set -euo pipefail
 #
 # Assumes VAULT_ADDR, VAULT_CACERT, and VAULT_TOKEN are already set in the environment.
 #
-# Outputs <basename>.crt, <basename>.key, and <basename>.pfx to ~/Downloads.
-# Upload the .pfx via the printer web UI:
-#   Network > Security > Certificate > Import Certificate and Private Key
+# Outputs to ~/Downloads:
+#   <basename>.crt / .key / .pfx  -- device certificate (upload .pfx to printer)
+#   ca-chain.crt                  -- intermediate + root CA chain (upload to printer CA store)
 
 HOSTNAME="${1:-}"
 TTL="${2:-8760h}"
@@ -28,6 +28,11 @@ CERT_FILE="${OUT_DIR}/${BASENAME}.crt"
 KEY_FILE="${OUT_DIR}/${BASENAME}.key"
 PFX_FILE="${OUT_DIR}/${BASENAME}.pfx"
 JSON_TMP="${OUT_DIR}/${BASENAME}-vault.json"
+CHAIN_FILE="${OUT_DIR}/ca-chain.crt"
+
+echo "Fetching CA chain from Vault..."
+curl -sf --cacert "$VAULT_CACERT" "${VAULT_ADDR}/v1/pki_int/ca/pem" >  "${CHAIN_FILE}"
+curl -sf --cacert "$VAULT_CACERT" "${VAULT_ADDR}/v1/pki/ca/pem"     >> "${CHAIN_FILE}"
 
 echo "Issuing certificate for ${HOSTNAME} (ttl=${TTL})..."
 
@@ -51,6 +56,5 @@ echo ""
 echo "Done. Files written to ${OUT_DIR}:"
 echo "  Certificate : ${CERT_FILE}"
 echo "  Private key : ${KEY_FILE}"
-echo "  PKCS#12     : ${PFX_FILE}  <-- upload this to the printer"
-echo ""
-echo "Upload via: Network > Security > Certificate > Import Certificate and Private Key"
+echo "  PKCS#12     : ${PFX_FILE}  <-- Network > Security > Certificate > Import Certificate and Private Key"
+echo "  CA chain    : ${CHAIN_FILE}  <-- Network > Security > CA Certificate > Import CA Certificate"
