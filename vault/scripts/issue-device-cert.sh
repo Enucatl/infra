@@ -31,8 +31,9 @@ JSON_TMP="${OUT_DIR}/${BASENAME}-vault.json"
 CHAIN_FILE="${OUT_DIR}/ca-chain.crt"
 
 echo "Fetching CA chain from Vault..."
-curl -sf --cacert "$VAULT_CACERT" "${VAULT_ADDR}/v1/pki_int/ca/pem" >  "${CHAIN_FILE}"
-curl -sf --cacert "$VAULT_CACERT" "${VAULT_ADDR}/v1/pki/ca/pem"     >> "${CHAIN_FILE}"
+vault read -field=certificate pki_int/cert/ca >  "${CHAIN_FILE}"
+echo ""                                        >> "${CHAIN_FILE}"
+vault read -field=certificate pki/cert/ca     >> "${CHAIN_FILE}"
 
 echo "Issuing certificate for ${HOSTNAME} (ttl=${TTL})..."
 
