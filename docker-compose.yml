@@ -21,7 +21,7 @@ services:
     command: vault server -config /vault/config/vault-conf.hcl
     #command: vault server -config /vault/config/vault-conf-insecure.hcl
     healthcheck:
-      test: ["CMD", "vault", "status", "-format=json"]
+      test: ["CMD-SHELL", "vault status -format=json | grep -q '\"initialized\": true'"]
       interval: 10s
       timeout: 5s
       retries: 3
