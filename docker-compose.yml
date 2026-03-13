@@ -14,6 +14,8 @@ services:
       - certificates:/certificates
     environment:
       - VAULT_LOG_LEVEL=info
+      - VAULT_ADDR
+      - VAULT_CACERT
     networks:
       - infra
     command: vault server -config /vault/config/vault-conf.hcl
