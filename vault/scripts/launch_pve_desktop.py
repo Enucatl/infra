@@ -30,24 +30,24 @@ def wait_for_port(host, port, timeout_secs, sleep_interval=2):
 
 
 @click.command()
-@click.option("--mac", default="b0:6e:bf:82:d5:1c", help="MAC Address for Wake-on-LAN")
+@click.option("--mac", default="30:56:0f:5e:a9:de", help="MAC Address for Wake-on-LAN")
 @click.option(
     "--dropbear-host",
     default="dropbear.proxmox-cortex.home.arpa",
     help="Hostname/IP for Dropbear SSH",
 )
 @click.option(
-    "--main-host", default="puritan.home.arpa", help="Hostname/IP of the VM (Main OS)"
+    "--main-host", default="complex.home.arpa", help="Hostname/IP of the VM (Main OS)"
 )
 @click.option(
     "--proxmox-host",
-    default="pve-desktop.home.arpa",
+    default="proxmox-cortex.home.arpa",
     help="Hostname/IP of the Proxmox Hypervisor",
 )
 @click.option(
     "--broadcast", default="10.0.0.255", help="Subnet broadcast address for WoL"
 )
-@click.option("--vm-id", default=300, help="ID of the Proxmox VM to start")
+@click.option("--vm-id", default=200, help="ID of the Proxmox VM to start")
 def main(mac, dropbear_host, main_host, proxmox_host, broadcast, vm_id):
     """
     Automates the process of waking a Proxmox server, unlocking the ZFS root via Dropbear,
@@ -148,23 +148,11 @@ def main(mac, dropbear_host, main_host, proxmox_host, broadcast, vm_id):
         click.echo("[!] Failed to start VM.", err=True)
         sys.exit(1)
 
-    if vm_id == 300:
-        # Wait max 180 seconds for VM SSH (Port 22)
-        click.echo(f"[-] Waiting for VM ({main_host}) to come online...")
-        if not wait_for_port(main_host, 22, 180, 5):
-            click.echo("[!] Timed out waiting for Main Host (VM).", err=True)
-            sys.exit(1)
-
-        # Connect and start the service
-        click.echo("[+] VM is up. Starting Sunshine service...")
-        try:
-            subprocess.check_call(
-                f"ssh '{main_host}' 'systemctl --user start sunshine'", shell=True
-            )
-            click.echo("[+] Sunshine started successfully.")
-        except subprocess.CalledProcessError:
-            click.echo("[!] Failed to start Sunshine.", err=True)
-            sys.exit(1)
+    # Wait max 180 seconds for VM SSH (Port 22)
+    click.echo(f"[-] Waiting for VM ({main_host}) to come online...")
+    if not wait_for_port(main_host, 22, 180, 5):
+        click.echo("[!] Timed out waiting for Main Host (VM).", err=True)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
