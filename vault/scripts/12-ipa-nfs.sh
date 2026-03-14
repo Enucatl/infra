@@ -23,9 +23,12 @@ ipa service-add-host nfs/${DOCKER_FQDN} --hosts ${DOCKER_FQDN} 2>/dev/null || tr
 ipa service-add-host nfs/forbearance.${DOMAIN} --hosts forbearance.${DOMAIN} 2>/dev/null || true
 ipa service-add nfs/bypaing.${DOMAIN} 2>/dev/null || true
 ipa service-add-host nfs/bypaing.${DOMAIN} --hosts bypaing.${DOMAIN} 2>/dev/null || true
+ipa service-add nfs/complex.${DOMAIN} 2>/dev/null || true
+ipa service-add-host nfs/complex.${DOMAIN} --hosts bypaing.${DOMAIN} 2>/dev/null || true
 echo "Configuration Complete."
 EOF
 
-ssh "user@${DOCKER_FQDN}" "kinit -k && ipa-getkeytab -s ${FREEIPA_FQDN} -p nfs/${DOCKER_FQDN} -k /etc/krb5.keytab"
-ssh "user@forbearance.${DOMAIN}" "kinit -k && ipa-getkeytab -s ${FREEIPA_FQDN} -p nfs/forbearance.${DOMAIN} -k /etc/krb5.keytab"
-ssh "user@bypaing.${DOMAIN}" "kinit -k && ipa-getkeytab -s ${FREEIPA_FQDN} -p nfs/bypaing.${DOMAIN} -k /etc/krb5.keytab"
+ssh "user@${DOCKER_FQDN}" "sudo kinit -k && sudo ipa-getkeytab -s ${FREEIPA_FQDN} -p nfs/${DOCKER_FQDN} -k /etc/krb5.keytab"
+ssh "user@forbearance.${DOMAIN}" "sudo kinit -k && sudo ipa-getkeytab -s ${FREEIPA_FQDN} -p nfs/forbearance.${DOMAIN} -k /etc/krb5.keytab"
+ssh "user@bypaing.${DOMAIN}" "sudo kinit -k && sudo ipa-getkeytab -s ${FREEIPA_FQDN} -p nfs/bypaing.${DOMAIN} -k /etc/krb5.keytab"
+ssh "user@complex.${DOMAIN}" "sudo kinit -k && sudo ipa-getkeytab -s ${FREEIPA_FQDN} -p nfs/complex.${DOMAIN} -k /etc/krb5.keytab"

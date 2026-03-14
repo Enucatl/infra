@@ -33,7 +33,7 @@ def wait_for_port(host, port, timeout_secs, sleep_interval=2):
 @click.option("--mac", default="b0:6e:bf:82:d5:1c", help="MAC Address for Wake-on-LAN")
 @click.option(
     "--dropbear-host",
-    default="dropbear.pve-desktop.home.arpa",
+    default="dropbear.proxmox-cortex.home.arpa",
     help="Hostname/IP for Dropbear SSH",
 )
 @click.option(
@@ -44,7 +44,9 @@ def wait_for_port(host, port, timeout_secs, sleep_interval=2):
     default="pve-desktop.home.arpa",
     help="Hostname/IP of the Proxmox Hypervisor",
 )
-@click.option("--broadcast", default="10.0.0.255", help="Subnet broadcast address for WoL")
+@click.option(
+    "--broadcast", default="10.0.0.255", help="Subnet broadcast address for WoL"
+)
 @click.option("--vm-id", default=300, help="ID of the Proxmox VM to start")
 def main(mac, dropbear_host, main_host, proxmox_host, broadcast, vm_id):
     """
